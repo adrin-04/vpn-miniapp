@@ -29,8 +29,14 @@
         }
         h2 { margin-top: 0; margin-bottom: 8px; font-size: 22px; }
         p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
-        
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
         input[type="text"] {
+            flex: 1;
             width: 100%;
             padding: 14px;
             border: 1px solid rgba(0,0,0,0.2);
@@ -39,7 +45,17 @@
             outline: none;
             background: var(--tg-theme-bg-color, #fff);
             color: var(--tg-theme-text-color, #000);
-            margin-bottom: 12px;
+            min-width: 0;
+        }
+        .btn-paste {
+            flex-shrink: 0;
+            padding: 0 16px;
+            border: none;
+            border-radius: 12px;
+            background: #e5e5ea;
+            color: #1c1c1e;
+            font-size: 18px;
+            cursor: pointer;
         }
         .btn-happ {
             width: 100%;
@@ -53,56 +69,108 @@
             color: white;
             transition: opacity 0.2s ease;
         }
-        .btn-happ:active {
-            opacity: 0.8;
+        .btn-happ:active { opacity: 0.8; }
+        .hint {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-
     <div class="container">
         <h2>Happ App Import</h2>
         <p>Paste your subscription link below</p>
 
-        <!-- Input Field -->
-        <input type="text" id="link-input" placeholder="Paste your link here...">
+        <div class="input-row">
+            <input type="text" id="link-input" placeholder="Paste your link here...">
+            <button class="btn-paste" id="pasteBtn" title="Aus Zwischenablage einfügen">📋</button>
+        </div>
 
-        <!-- Import Button -->
         <button class="btn-happ" id="importBtn">🚀 Import to Happ App</button>
+        <p class="hint" id="hint" style="display:none;">Konnte nicht automatisch aus der Zwischenablage lesen – bitte manuell einfügen (lange auf das Feld tippen).</p>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-        // Check if there is a saved link already
-        const savedUrl = localStorage.getItem('vpn_sub_url');
-        if (savedUrl) {
-            document.getElementById('link-input').value = savedUrl;
+    const input = document.getElementById('link-input');
+    const hint = document.getElementById('hint');
+
+    // Gespeicherten Link wiederherstellen
+    const savedUrl = localStorage.getItem('vpn_sub_url');
+    if (savedUrl) input.value = savedUrl;
+
+    function looksLikeLink(text) {
+        return typeof text === 'string' && /^https?:\/\//i.test(text.trim());
+    }
+
+    // Versucht, Text aus der Zwischenablage zu lesen.
+    // Callback bekommt den Text (oder null, wenn nichts gefunden wurde).
+    function tryReadClipboard(callback) {
+        // 1. Telegram-eigene API (Bot API 6.4+)
+        if (tg.readTextFromClipboard) {
+            tg.readTextFromClipboard((text) => {
+                if (text) {
+                    callback(text);
+                } else if (navigator.clipboard && navigator.clipboard.readText) {
+                    // 2. Fallback: Standard Web Clipboard API
+                    navigator.clipboard.readText().then(callback).catch(() => callback(null));
+                } else {
+                    callback(null);
+                }
+            });
+        } else if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(callback).catch(() => callback(null));
+        } else {
+            callback(null);
+        }
+    }
+
+    // A) Bester Fall: automatischer Versuch beim Laden.
+    // Funktioniert zuverlässig eher in Desktop-Browsern / Telegram Desktop,
+    // auf iOS/Android-Telegram häufig NICHT (bekannte Einschränkung).
+    window.addEventListener('load', () => {
+        if (!input.value) {
+            tryReadClipboard((text) => {
+                if (looksLikeLink(text)) {
+                    input.value = text.trim();
+                }
+            });
+        }
+    });
+
+    // B) Zuverlässiger Weg: expliziter Button-Klick (echte Nutzer-Geste)
+    document.getElementById('pasteBtn').addEventListener('click', () => {
+        tryReadClipboard((text) => {
+            if (looksLikeLink(text)) {
+                input.value = text.trim();
+                hint.style.display = 'none';
+            } else {
+                hint.style.display = 'block';
+            }
+        });
+    });
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+        const subLink = input.value.trim();
+        if (!subLink) {
+            alert("Please paste your subscription link first!");
+            return;
         }
 
-        document.getElementById('importBtn').addEventListener('click', () => {
-            const subLink = document.getElementById('link-input').value.trim();
-            if (!subLink) {
-                alert("Please paste your subscription link first!");
-                return;
-            }
+        localStorage.setItem('vpn_sub_url', subLink);
 
-            // Link auf dem Handy speichern
-            localStorage.setItem('vpn_sub_url', subLink);
+        let happLink = subLink;
+        if (!happLink.startsWith("happ://add/")) {
+            happLink = "happ://add/" + subLink;
+        }
 
-            // Formatiere den Link: happ://add/...
-            let happLink = subLink;
-            if (!happLink.startsWith("happ://add/")) {
-                happLink = "happ://add/" + subLink;
-            }
-
-            // Leite zur Bridge-Seite auf GitHub weiter (öffnet den System-Browser)
-            const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
-
-            tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
-        });
-    </script>
+        const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
+        tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
+    });
+</script>
 </body>
 </html>
