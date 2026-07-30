@@ -30,13 +30,7 @@
         h2 { margin-top: 0; margin-bottom: 8px; font-size: 22px; }
         p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
 
-        .input-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
         input[type="text"] {
-            flex: 1;
             width: 100%;
             padding: 14px;
             border: 1px solid rgba(0,0,0,0.2);
@@ -45,17 +39,7 @@
             outline: none;
             background: var(--tg-theme-bg-color, #fff);
             color: var(--tg-theme-text-color, #000);
-            min-width: 0;
-        }
-        .btn-paste {
-            flex-shrink: 0;
-            padding: 0 16px;
-            border: none;
-            border-radius: 12px;
-            background: #e5e5ea;
-            color: #1c1c1e;
-            font-size: 18px;
-            cursor: pointer;
+            margin-bottom: 12px;
         }
         .btn-happ {
             width: 100%;
@@ -74,21 +58,19 @@
             font-size: 12px;
             opacity: 0.6;
             margin-top: 10px;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Happ App Import</h2>
-        <p>Paste your subscription link below</p>
+        <p>Kopiere deinen Subscription-Link und tippe unten</p>
 
-        <div class="input-row">
-            <input type="text" id="link-input" placeholder="Paste your link here...">
-            <button class="btn-paste" id="pasteBtn" title="Aus Zwischenablage einfügen">📋</button>
-        </div>
+        <input type="text" id="link-input" placeholder="Wird automatisch eingefügt...">
 
-        <button class="btn-happ" id="importBtn">🚀 Import to Happ App</button>
-        <p class="hint" id="hint" style="display:none;">Konnte nicht automatisch aus der Zwischenablage lesen – bitte manuell einfügen (lange auf das Feld tippen).</p>
+        <button class="btn-happ" id="importBtn">📋 Einfügen &amp; in Happ importieren</button>
+        <p class="hint" id="hint">Konnte nichts aus der Zwischenablage lesen. Bitte Link manuell ins Feld einfügen und nochmal tippen.</p>
     </div>
 
 <script>
@@ -99,7 +81,7 @@
     const input = document.getElementById('link-input');
     const hint = document.getElementById('hint');
 
-    // Gespeicherten Link wiederherstellen
+    // Zuletzt genutzten Link wiederherstellen (falls vorhanden)
     const savedUrl = localStorage.getItem('vpn_sub_url');
     if (savedUrl) input.value = savedUrl;
 
@@ -107,16 +89,12 @@
         return typeof text === 'string' && /^https?:\/\//i.test(text.trim());
     }
 
-    // Versucht, Text aus der Zwischenablage zu lesen.
-    // Callback bekommt den Text (oder null, wenn nichts gefunden wurde).
     function tryReadClipboard(callback) {
-        // 1. Telegram-eigene API (Bot API 6.4+)
         if (tg.readTextFromClipboard) {
             tg.readTextFromClipboard((text) => {
-                if (text) {
+                if (looksLikeLink(text)) {
                     callback(text);
                 } else if (navigator.clipboard && navigator.clipboard.readText) {
-                    // 2. Fallback: Standard Web Clipboard API
                     navigator.clipboard.readText().then(callback).catch(() => callback(null));
                 } else {
                     callback(null);
@@ -129,38 +107,7 @@
         }
     }
 
-    // A) Bester Fall: automatischer Versuch beim Laden.
-    // Funktioniert zuverlässig eher in Desktop-Browsern / Telegram Desktop,
-    // auf iOS/Android-Telegram häufig NICHT (bekannte Einschränkung).
-    window.addEventListener('load', () => {
-        if (!input.value) {
-            tryReadClipboard((text) => {
-                if (looksLikeLink(text)) {
-                    input.value = text.trim();
-                }
-            });
-        }
-    });
-
-    // B) Zuverlässiger Weg: expliziter Button-Klick (echte Nutzer-Geste)
-    document.getElementById('pasteBtn').addEventListener('click', () => {
-        tryReadClipboard((text) => {
-            if (looksLikeLink(text)) {
-                input.value = text.trim();
-                hint.style.display = 'none';
-            } else {
-                hint.style.display = 'block';
-            }
-        });
-    });
-
-    document.getElementById('importBtn').addEventListener('click', () => {
-        const subLink = input.value.trim();
-        if (!subLink) {
-            alert("Please paste your subscription link first!");
-            return;
-        }
-
+    function goToHapp(subLink) {
         localStorage.setItem('vpn_sub_url', subLink);
 
         let happLink = subLink;
@@ -170,6 +117,31 @@
 
         const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
         tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
+    }
+
+    // EIN Klick = Zwischenablage lesen + direkt importieren
+    document.getElementById('importBtn').addEventListener('click', () => {
+        hint.style.display = 'none';
+
+        tryReadClipboard((clipText) => {
+            let subLink;
+
+            if (looksLikeLink(clipText)) {
+                // Frischer Link aus der Zwischenablage gefunden -> nutzen
+                subLink = clipText.trim();
+                input.value = subLink;
+            } else {
+                // Fallback: nimm, was schon manuell im Feld steht
+                subLink = input.value.trim();
+            }
+
+            if (!subLink) {
+                hint.style.display = 'block';
+                return;
+            }
+
+            goToHapp(subLink);
+        });
     });
 </script>
 </body>
