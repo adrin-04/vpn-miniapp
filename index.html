@@ -56,6 +56,13 @@
         .btn-happ:active {
             opacity: 0.8;
         }
+        #status-msg {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #34c759;
+            font-weight: 500;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -68,14 +75,16 @@
         <input type="text" id="link-input" placeholder="Paste your link here...">
 
         <!-- Import Button -->
-        <button class="btn-happ" onclick="importToHapp()">🚀 Import to Happ App</button>
+        <button class="btn-happ" id="import-btn" onclick="importToHapp()">🚀 Import to Happ App</button>
+        
+        <div id="status-msg"></div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Check if there is a saved link already
+        // Saved link auto-fill
         const savedUrl = localStorage.getItem('vpn_sub_url');
         if (savedUrl) {
             document.getElementById('link-input').value = savedUrl;
@@ -83,22 +92,37 @@
 
         function importToHapp() {
             const inputVal = document.getElementById('link-input').value.trim();
+            const statusMsg = document.getElementById('status-msg');
             
             if (!inputVal) {
                 alert("Please paste your subscription link first!");
                 return;
             }
 
-            // Save for future visits
+            // Save link
             localStorage.setItem('vpn_sub_url', inputVal);
 
-            const happLink = "happ://add/sub?url=" + encodeURIComponent(inputVal);
+            const happUrl = "happ://add/sub?url=" + encodeURIComponent(inputVal);
 
-            // Use Telegram WebApp API to open external schemes safely
-            if (tg && tg.openLink) {
-                tg.openLink(happLink);
-            } else {
-                window.location.href = happLink;
+            // 1. Always copy link to clipboard as a safety backup
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(inputVal);
+            }
+
+            // 2. Trigger native deep link via anchor element click
+            try {
+                const a = document.createElement('a');
+                a.href = happUrl;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                statusMsg.innerText = "Opening Happ App... (Link copied to clipboard)";
+                statusMsg.style.display = "block";
+            } catch (e) {
+                // Fallback
+                window.location.href = happUrl;
             }
         }
     </script>
