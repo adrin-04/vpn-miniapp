@@ -133,6 +133,7 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // 1. Lade den gespeicherten Link vom Gerät des Nutzers
         let subUrl = localStorage.getItem('vpn_sub_url') || "";
 
         function updateUI() {
@@ -144,6 +145,7 @@
             }
         }
 
+        // 2. Link speichern
         function saveCustomLink() {
             const val = document.getElementById('link-input').value.trim();
             if (val) {
@@ -151,23 +153,30 @@
                 localStorage.setItem('vpn_sub_url', subUrl);
                 updateUI();
                 alert("Link saved successfully!");
+            } else {
+                alert("Please enter a valid link.");
             }
         }
 
+        // 3. Import in Happ App
         function importToHapp() {
             if (!subUrl) return alert("Please save a link first!");
             window.location.href = "happ://add/sub?url=" + encodeURIComponent(subUrl);
         }
 
+        // 4. Link kopieren
         function copyLink() {
             if (!subUrl) return alert("Please save a link first!");
             navigator.clipboard.writeText(subUrl).then(() => {
                 const btn = document.getElementById('copy-btn');
                 btn.innerText = "✅ Link Copied!";
                 setTimeout(() => btn.innerText = "📋 Copy Subscription Link", 2000);
+            }).catch(() => {
+                alert("Failed to copy. Please copy manually.");
             });
         }
 
+        // 5. QR-Code anzeigen
         function toggleQR() {
             if (!subUrl) return alert("Please save a link first!");
             const container = document.getElementById('qr-container');
@@ -181,6 +190,7 @@
             }
         }
 
+        // 6. QR-Code herunterladen
         function downloadQR() {
             const img = document.getElementById('qr-img');
             if (!img.src) return;
@@ -191,9 +201,11 @@
                     link.href = URL.createObjectURL(blob);
                     link.download = "vpn-qr-code.png";
                     link.click();
-                });
+                })
+                .catch(() => alert("Download failed. Please long-press the QR code to save it."));
         }
 
+        // Initiales UI Update beim Starten der App
         updateUI();
     </script>
 </body>
