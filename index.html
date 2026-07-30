@@ -6,9 +6,7 @@
     <title>VPN Subscription</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--tg-theme-bg-color, #f4f4f7);
@@ -30,16 +28,34 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             text-align: center;
         }
-        h2 {
-            margin-top: 0;
-            margin-bottom: 8px;
-            font-size: 22px;
+        h2 { margin-top: 0; margin-bottom: 8px; font-size: 22px; }
+        p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
+        
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
         }
-        p {
-            font-size: 14px;
-            opacity: 0.7;
-            margin-bottom: 20px;
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 10px;
+            font-size: 13px;
+            outline: none;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
         }
+        .btn-save {
+            padding: 12px 16px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .url-box {
             width: 100%;
             padding: 12px;
@@ -47,10 +63,9 @@
             border: 1px solid rgba(0,0,0,0.1);
             border-radius: 10px;
             font-family: monospace;
-            font-size: 13px;
+            font-size: 12px;
             word-break: break-all;
             margin-bottom: 16px;
-            user-select: all;
         }
         .btn {
             width: 100%;
@@ -61,32 +76,16 @@
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
-        .btn:active {
-            opacity: 0.8;
-        }
-        .btn-happ {
-            background-color: #007aff;
-            color: white;
-        }
-        .btn-copy {
-            background-color: #34c759;
-            color: white;
-        }
-        .btn-qr {
-            background-color: #8e8e93;
-            color: white;
-        }
-        .btn-download {
-            background-color: #5856d6;
-            color: white;
-            margin-top: 10px;
-        }
+        .btn-happ { background-color: #007aff; color: white; }
+        .btn-copy { background-color: #34c759; color: white; }
+        .btn-qr { background-color: #8e8e93; color: white; }
+        .btn-download { background-color: #5856d6; color: white; margin-top: 10px; }
+        
         #qr-container {
             margin-top: 16px;
             padding-top: 16px;
@@ -107,10 +106,16 @@
 
     <div class="container">
         <h2>VPN Setup</h2>
-        <p>Manage your subscription and connect easily</p>
+        <p>Enter your Subscription Link below</p>
 
-        <!-- Subscription Link Display -->
-        <div class="url-box" id="sub-url-text">Loading link...</div>
+        <!-- Dynamic Link Input -->
+        <div class="input-group">
+            <input type="text" id="link-input" placeholder="Paste your link here...">
+            <button class="btn-save" onclick="saveCustomLink()">Save</button>
+        </div>
+
+        <!-- Display Area -->
+        <div class="url-box" id="sub-url-text">No link saved yet.</div>
 
         <!-- Action Buttons -->
         <button class="btn btn-happ" onclick="importToHapp()">🚀 Import to Happ App</button>
@@ -128,71 +133,68 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Get subscription URL from query parameters (e.g., ?sub=YOUR_LINK)
-        const urlParams = new URLSearchParams(window.location.search);
-        let subUrl = urlParams.get('sub');
+        let subUrl = localStorage.getItem('vpn_sub_url') || "";
 
-        // Fallback or demo link if no URL parameter is provided
-        if (!subUrl) {
-            subUrl = "https://example.com/sub/your-token-here";
-        }
-
-        // Display the link in the page
-        document.getElementById('sub-url-text').innerText = subUrl;
-
-        // 1. Import to Happ
-        function importToHapp() {
-            const happLink = "happ://add/sub?url=" + encodeURIComponent(subUrl);
-            window.location.href = happLink;
-        }
-
-        // 2. Copy Link
-        function copyLink() {
-            navigator.clipboard.writeText(subUrl).then(() => {
-                const copyBtn = document.getElementById('copy-btn');
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = "✅ Link Copied!";
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                }, 2000);
-            }).catch(err => {
-                alert("Failed to copy link. Please copy manually.");
-            });
-        }
-
-        // 3. Toggle QR Code Visibility
-        function toggleQR() {
-            const qrContainer = document.getElementById('qr-container');
-            const qrImg = document.getElementById('qr-img');
-            
-            if (qrContainer.style.display === "block") {
-                qrContainer.style.display = "none";
+        function updateUI() {
+            if (subUrl) {
+                document.getElementById('sub-url-text').innerText = subUrl;
+                document.getElementById('link-input').value = subUrl;
             } else {
-                const qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(subUrl);
-                qrImg.src = qrApiUrl;
-                qrContainer.style.display = "block";
+                document.getElementById('sub-url-text').innerText = "Please paste and save your link above.";
             }
         }
 
-        // 4. Download QR Code
-        function downloadQR() {
-            const qrImgSrc = document.getElementById('qr-img').src;
-            if (!qrImgSrc) return;
-
-            fetch(qrImgSrc)
-                .then(response => response.blob())
-                .then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.download = "vpn-qr-code.png";
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(blobUrl);
-                })
-                .catch(() => alert("Could not download QR Code directly. Please long press the image to save."));
+        function saveCustomLink() {
+            const val = document.getElementById('link-input').value.trim();
+            if (val) {
+                subUrl = val;
+                localStorage.setItem('vpn_sub_url', subUrl);
+                updateUI();
+                alert("Link saved successfully!");
+            }
         }
+
+        function importToHapp() {
+            if (!subUrl) return alert("Please save a link first!");
+            window.location.href = "happ://add/sub?url=" + encodeURIComponent(subUrl);
+        }
+
+        function copyLink() {
+            if (!subUrl) return alert("Please save a link first!");
+            navigator.clipboard.writeText(subUrl).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerText = "✅ Link Copied!";
+                setTimeout(() => btn.innerText = "📋 Copy Subscription Link", 2000);
+            });
+        }
+
+        function toggleQR() {
+            if (!subUrl) return alert("Please save a link first!");
+            const container = document.getElementById('qr-container');
+            const img = document.getElementById('qr-img');
+            
+            if (container.style.display === "block") {
+                container.style.display = "none";
+            } else {
+                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(subUrl);
+                container.style.display = "block";
+            }
+        }
+
+        function downloadQR() {
+            const img = document.getElementById('qr-img');
+            if (!img.src) return;
+            fetch(img.src)
+                .then(res => res.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "vpn-qr-code.png";
+                    link.click();
+                });
+        }
+
+        updateUI();
     </script>
 </body>
 </html>
