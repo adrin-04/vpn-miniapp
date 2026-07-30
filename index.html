@@ -92,8 +92,14 @@
             // Save for future visits
             localStorage.setItem('vpn_sub_url', inputVal);
 
-            // Redirect to Happ App
-            window.location.href = "happ://add/sub?url=" + encodeURIComponent(inputVal);
+            const happLink = "happ://add/sub?url=" + encodeURIComponent(inputVal);
+
+            // Use Telegram WebApp API to open external schemes safely
+            if (tg && tg.openLink) {
+                tg.openLink(happLink);
+            } else {
+                window.location.href = happLink;
+            }
         }
     </script>
 </body>
