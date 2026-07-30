@@ -91,7 +91,7 @@
         }
 
         function importToHapp() {
-            const inputVal = document.getElementById('link-input').value.trim();
+            let inputVal = document.getElementById('link-input').value.trim();
             const statusMsg = document.getElementById('status-msg');
             
             if (!inputVal) {
@@ -102,14 +102,18 @@
             // Save link
             localStorage.setItem('vpn_sub_url', inputVal);
 
-            const happUrl = "happ://add/sub?url=" + encodeURIComponent(inputVal);
+            // Construct URL: happ://add/https://...
+            let happUrl = inputVal;
+            if (!happUrl.startsWith("happ://add/")) {
+                happUrl = "happ://add/" + inputVal;
+            }
 
-            // 1. Always copy link to clipboard as a safety backup
+            // 1. Copy original link to clipboard as a fallback
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(inputVal);
             }
 
-            // 2. Trigger native deep link via anchor element click
+            // 2. Trigger deep link
             try {
                 const a = document.createElement('a');
                 a.href = happUrl;
@@ -118,10 +122,9 @@
                 a.click();
                 document.body.removeChild(a);
 
-                statusMsg.innerText = "Opening Happ App... (Link copied to clipboard)";
+                statusMsg.innerText = "Opening Happ App...";
                 statusMsg.style.display = "block";
             } catch (e) {
-                // Fallback
                 window.location.href = happUrl;
             }
         }
