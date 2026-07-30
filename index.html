@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
     <style>
         * { box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Tahoma, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--tg-theme-bg-color, #f4f4f7);
             color: var(--tg-theme-text-color, #1c1c1e);
             display: flex;
@@ -40,6 +40,7 @@
             background: var(--tg-theme-bg-color, #fff);
             color: var(--tg-theme-text-color, #000);
             margin-bottom: 12px;
+            direction: ltr; /* Link bleibt linksbündig */
         }
         .btn-happ {
             width: 100%;
@@ -61,14 +62,14 @@
 <body>
 
     <div class="container">
-        <h2>Happ App Import</h2>
-        <p>Paste your subscription link below</p>
+        <h2>ورود به Happ App</h2>
+        <p>لینک اشتراک خود را در زیر قرار دهید</p>
 
         <!-- Input Field -->
-        <input type="text" id="link-input" placeholder="Paste your link here...">
+        <input type="text" id="link-input" placeholder="لینک خود را اینجا قرار دهید...">
 
         <!-- Import Button -->
-        <button class="btn-happ" id="importBtn">🚀 Import to Happ App</button>
+        <button class="btn-happ" id="importBtn">🚀 افزودن به Happ App</button>
     </div>
 
     <script>
@@ -79,17 +80,15 @@
         document.getElementById('importBtn').addEventListener('click', () => {
             const subLink = document.getElementById('link-input').value.trim();
             if (!subLink) {
-                alert("Please paste your subscription link first!");
+                alert("لطفاً ابتدا لینک اشتراک خود را وارد کنید!");
                 return;
             }
 
-            // Formatiere den Link: happ://add/...
             let happLink = subLink;
             if (!happLink.startsWith("happ://add/")) {
                 happLink = "happ://add/" + subLink;
             }
 
-            // Leite zur Bridge-Seite auf GitHub weiter
             const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
 
             tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
