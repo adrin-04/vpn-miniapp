@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Happ App...</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    text-align: center;
+    padding: 60px 20px;
+    background-color: #f4f4f7;
+    color: #1c1c1e;
+  }
+  .card {
+    background: white;
+    padding: 30px 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  button {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: none;
+    background: #007aff;
+    color: #fff;
+    margin-top: 20px;
+    width: 100%;
+    cursor: pointer;
+  }
+  a {
+    display: block;
+    margin-top: 20px;
+    color: #007aff;
+    font-size: 14px;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>Opening Happ...</h2>
+    <p>If the app does not open automatically, click the button below.</p>
+    <button id="openBtn">Open in Happ App</button>
+    <a id="fallbackLink" style="display:none;">Happ not installed? Download here</a>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const target = params.get('url'); 
+  const ua = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua);
+
+  // App Store Links
+  const iosStoreUrl = 'https://apps.apple.com/app/id6504287915'; // Happ iOS ID
+  const androidStoreUrl = 'https://play.google.com/store/apps/details?id=com.happproxy';
+
+  function buildAndroidIntentUrl(happUrl) {
+    const rest = happUrl.replace(/^happ:\/\//, ''); 
+    const fallback = encodeURIComponent(androidStoreUrl);
+    return `intent://${rest}#Intent;scheme=happ;package=com.happproxy;S.browser_fallback_url=${fallback};end`;
+  }
+
+  function attemptOpen() {
+    if (!target) return;
+    window.location.href = /android/i.test(ua) ? buildAndroidIntentUrl(target) : target;
+  }
+
+  // Button Klick (User Gesture für iOS Safari)
+  document.getElementById('openBtn').addEventListener('click', attemptOpen);
+
+  window.addEventListener('load', () => {
+    // Automatischer Versuch
+    setTimeout(attemptOpen, 300);
+
+    // Fallback nach 2 Sekunden
+    setTimeout(() => {
+      if (document.visibilityState === 'visible') {
+        const el = document.getElementById('fallbackLink');
+        el.href = isIOS ? iosStoreUrl : androidStoreUrl;
+        el.style.display = 'block';
+      }
+    }, 2000);
+  });
+</script>
+</body>
+</html>
