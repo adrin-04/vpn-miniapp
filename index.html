@@ -29,7 +29,7 @@
         }
         h2 { margin-top: 0; margin-bottom: 8px; font-size: 22px; }
         p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
-
+        
         input[type="text"] {
             width: 100%;
             padding: 14px;
@@ -53,96 +53,47 @@
             color: white;
             transition: opacity 0.2s ease;
         }
-        .btn-happ:active { opacity: 0.8; }
-        .hint {
-            font-size: 12px;
-            opacity: 0.6;
-            margin-top: 10px;
-            display: none;
+        .btn-happ:active {
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
         <h2>Happ App Import</h2>
-        <p>Kopiere deinen Subscription-Link und tippe unten</p>
+        <p>Paste your subscription link below</p>
 
-        <input type="text" id="link-input" placeholder="Wird automatisch eingefügt...">
+        <!-- Input Field -->
+        <input type="text" id="link-input" placeholder="Paste your link here...">
 
-        <button class="btn-happ" id="importBtn">📋 Einfügen &amp; in Happ importieren</button>
-        <p class="hint" id="hint">Konnte nichts aus der Zwischenablage lesen. Bitte Link manuell ins Feld einfügen und nochmal tippen.</p>
+        <!-- Import Button -->
+        <button class="btn-happ" id="importBtn">🚀 Import to Happ App</button>
     </div>
 
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-    const input = document.getElementById('link-input');
-    const hint = document.getElementById('hint');
-
-    // Zuletzt genutzten Link wiederherstellen (falls vorhanden)
-    const savedUrl = localStorage.getItem('vpn_sub_url');
-    if (savedUrl) input.value = savedUrl;
-
-    function looksLikeLink(text) {
-        return typeof text === 'string' && /^https?:\/\//i.test(text.trim());
-    }
-
-    function tryReadClipboard(callback) {
-        if (tg.readTextFromClipboard) {
-            tg.readTextFromClipboard((text) => {
-                if (looksLikeLink(text)) {
-                    callback(text);
-                } else if (navigator.clipboard && navigator.clipboard.readText) {
-                    navigator.clipboard.readText().then(callback).catch(() => callback(null));
-                } else {
-                    callback(null);
-                }
-            });
-        } else if (navigator.clipboard && navigator.clipboard.readText) {
-            navigator.clipboard.readText().then(callback).catch(() => callback(null));
-        } else {
-            callback(null);
-        }
-    }
-
-    function goToHapp(subLink) {
-        localStorage.setItem('vpn_sub_url', subLink);
-
-        let happLink = subLink;
-        if (!happLink.startsWith("happ://add/")) {
-            happLink = "happ://add/" + subLink;
-        }
-
-        const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
-        tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
-    }
-
-    // EIN Klick = Zwischenablage lesen + direkt importieren
-    document.getElementById('importBtn').addEventListener('click', () => {
-        hint.style.display = 'none';
-
-        tryReadClipboard((clipText) => {
-            let subLink;
-
-            if (looksLikeLink(clipText)) {
-                // Frischer Link aus der Zwischenablage gefunden -> nutzen
-                subLink = clipText.trim();
-                input.value = subLink;
-            } else {
-                // Fallback: nimm, was schon manuell im Feld steht
-                subLink = input.value.trim();
-            }
-
+        document.getElementById('importBtn').addEventListener('click', () => {
+            const subLink = document.getElementById('link-input').value.trim();
             if (!subLink) {
-                hint.style.display = 'block';
+                alert("Please paste your subscription link first!");
                 return;
             }
 
-            goToHapp(subLink);
+            // Formatiere den Link: happ://add/...
+            let happLink = subLink;
+            if (!happLink.startsWith("happ://add/")) {
+                happLink = "happ://add/" + subLink;
+            }
+
+            // Leite zur Bridge-Seite auf GitHub weiter
+            const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
+
+            tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
