@@ -56,13 +56,6 @@
         .btn-happ:active {
             opacity: 0.8;
         }
-        #status-msg {
-            margin-top: 12px;
-            font-size: 13px;
-            color: #34c759;
-            font-weight: 500;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -75,59 +68,41 @@
         <input type="text" id="link-input" placeholder="Paste your link here...">
 
         <!-- Import Button -->
-        <button class="btn-happ" id="import-btn" onclick="importToHapp()">🚀 Import to Happ App</button>
-        
-        <div id="status-msg"></div>
+        <button class="btn-happ" id="importBtn">🚀 Import to Happ App</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.ready();
         tg.expand();
 
-        // Saved link auto-fill
+        // Check if there is a saved link already
         const savedUrl = localStorage.getItem('vpn_sub_url');
         if (savedUrl) {
             document.getElementById('link-input').value = savedUrl;
         }
 
-        function importToHapp() {
-            let inputVal = document.getElementById('link-input').value.trim();
-            const statusMsg = document.getElementById('status-msg');
-            
-            if (!inputVal) {
+        document.getElementById('importBtn').addEventListener('click', () => {
+            const subLink = document.getElementById('link-input').value.trim();
+            if (!subLink) {
                 alert("Please paste your subscription link first!");
                 return;
             }
 
-            // Save link
-            localStorage.setItem('vpn_sub_url', inputVal);
+            // Link auf dem Handy speichern
+            localStorage.setItem('vpn_sub_url', subLink);
 
-            // Construct URL: happ://add/https://...
-            let happUrl = inputVal;
-            if (!happUrl.startsWith("happ://add/")) {
-                happUrl = "happ://add/" + inputVal;
+            // Formatiere den Link: happ://add/...
+            let happLink = subLink;
+            if (!happLink.startsWith("happ://add/")) {
+                happLink = "happ://add/" + subLink;
             }
 
-            // 1. Copy original link to clipboard as a fallback
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(inputVal);
-            }
+            // Leite zur Bridge-Seite auf GitHub weiter (öffnet den System-Browser)
+            const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
 
-            // 2. Trigger deep link
-            try {
-                const a = document.createElement('a');
-                a.href = happUrl;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
-                statusMsg.innerText = "Opening Happ App...";
-                statusMsg.style.display = "block";
-            } catch (e) {
-                window.location.href = happUrl;
-            }
-        }
+            tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
+        });
     </script>
 </body>
 </html>
