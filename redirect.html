@@ -53,10 +53,15 @@
   const params = new URLSearchParams(window.location.search);
   const target = params.get('url'); 
   const ua = navigator.userAgent;
+  
   const isIOS = /iphone|ipad|ipod/i.test(ua);
+  const isMac = /macintosh|mac os x/i.test(ua) && !isIOS;
+  const isWindows = /windows/i.test(ua);
+  const isAndroid = /android/i.test(ua);
 
-  const iosStoreUrl = 'https://apps.apple.com/app/id6504287915'; 
+  const appleStoreUrl = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215'; 
   const androidStoreUrl = 'https://play.google.com/store/apps/details?id=com.happproxy';
+  const windowsUrl = 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe';
 
   function buildAndroidIntentUrl(happUrl) {
     const rest = happUrl.replace(/^happ:\/\//, ''); 
@@ -66,7 +71,7 @@
 
   function attemptOpen() {
     if (!target) return;
-    window.location.href = /android/i.test(ua) ? buildAndroidIntentUrl(target) : target;
+    window.location.href = isAndroid ? buildAndroidIntentUrl(target) : target;
   }
 
   document.getElementById('openBtn').addEventListener('click', attemptOpen);
@@ -77,7 +82,15 @@
     setTimeout(() => {
       if (document.visibilityState === 'visible') {
         const el = document.getElementById('fallbackLink');
-        el.href = isIOS ? iosStoreUrl : androidStoreUrl;
+        
+        if (isWindows) {
+          el.href = windowsUrl;
+        } else if (isMac || isIOS) {
+          el.href = appleStoreUrl;
+        } else {
+          el.href = androidStoreUrl;
+        }
+        
         el.style.display = 'block';
       }
     }, 2000);
