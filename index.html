@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>VPN Import</title>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Tahoma, 'Segoe UI', Roboto, sans-serif;
+            font-family: Tahoma, "Segoe UI", Roboto, sans-serif;
             background-color: var(--tg-theme-bg-color, #f4f4f7);
             color: var(--tg-theme-text-color, #1c1c1e);
             display: flex;
@@ -18,30 +24,43 @@
             margin: 0;
             min-height: 100vh;
         }
+
         .container {
             width: 100%;
             max-width: 400px;
             background: var(--tg-theme-secondary-bg-color, #ffffff);
             padding: 24px 20px;
             border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             text-align: center;
         }
-        h2 { margin-top: 0; margin-bottom: 8px; font-size: 22px; }
-        p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
-        
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+
+        p {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 20px;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 14px;
-            border: 1px solid rgba(0,0,0,0.2);
+            border: 1px solid rgba(0, 0, 0, 0.2);
             border-radius: 12px;
             font-size: 14px;
             outline: none;
-            background: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
             margin-bottom: 12px;
-            direction: rtl; 
+            direction: ltr;
+            text-align: left;
         }
+
         .btn-happ {
             width: 100%;
             padding: 14px;
@@ -50,49 +69,81 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            background-color: #007aff;
-            color: white;
+            background-color: var(--tg-theme-button-color, #007aff);
+            color: var(--tg-theme-button-text-color, #ffffff);
             transition: opacity 0.2s ease;
         }
+
         .btn-happ:active {
             opacity: 0.8;
         }
     </style>
 </head>
-<body>
 
+<body>
     <div class="container">
         <h2>اپلیکیشن Happ</h2>
+
         <p>لینک سابسکریپشن خود را در زیر وارد کنید</p>
 
-        <!-- Input Field -->
-        <input type="text" id="link-input" placeholder="لینک خود را اینجا وارد کنید...">
+        <input
+            type="text"
+            id="link-input"
+            placeholder="لینک خود را اینجا وارد کنید..."
+            autocomplete="off"
+        >
 
-        <!-- Import Button -->
-        <button class="btn-happ" id="importBtn">افزودن به Happ 🚀</button>
+        <button class="btn-happ" id="importBtn">
+            افزودن به Happ 🚀
+        </button>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        const tg = window.Telegram?.WebApp;
 
-        document.getElementById('importBtn').addEventListener('click', () => {
-            const subLink = document.getElementById('link-input').value.trim();
-            if (!subLink) {
-                alert("لطفاً ابتدا لینک سابسکریپشن خود را وارد کنید!");
-                return;
-            }
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
 
-            let happLink = subLink;
-            if (!happLink.startsWith("happ://add/")) {
-                happLink = "happ://add/" + subLink;
-            }
+        document
+            .getElementById("importBtn")
+            .addEventListener("click", function () {
+                const input = document.getElementById("link-input");
+                const subLink = input.value.trim();
 
-            const bridgeUrl = 'https://adrin-04.github.io/vpn-miniapp/redirect.html?url=' + encodeURIComponent(happLink);
+                if (!subLink) {
+                    if (tg?.showAlert) {
+                        tg.showAlert(
+                            "لطفاً ابتدا لینک سابسکریپشن خود را وارد کنید!"
+                        );
+                    } else {
+                        alert(
+                            "لطفاً ابتدا لینک سابسکریپشن خود را وارد کنید!"
+                        );
+                    }
 
-            tg.openLink(bridgeUrl, { try_instant_view: false, try_browser: 'chrome' });
-        });
+                    return;
+                }
+
+                let happLink = subLink;
+
+                if (!happLink.startsWith("happ://add/")) {
+                    happLink = "happ://add/" + happLink;
+                }
+
+                const bridgeUrl =
+                    "https://adrin-04.github.io/vpn-miniapp/redirect.html?url=" +
+                    encodeURIComponent(happLink);
+
+                if (tg?.openLink) {
+                    tg.openLink(bridgeUrl, {
+                        try_instant_view: false
+                    });
+                } else {
+                    window.location.href = bridgeUrl;
+                }
+            });
     </script>
 </body>
 </html>
