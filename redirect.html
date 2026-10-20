@@ -1,100 +1,171 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Open Happ App...</title>
-<style>
-  body {
-    font-family: Tahoma, 'Segoe UI', Roboto, sans-serif;
-    text-align: center;
-    padding: 60px 20px;
-    background-color: #f4f4f7;
-    color: #1c1c1e;
-  }
-  .card {
-    background: white;
-    padding: 30px 20px;
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    max-width: 400px;
-    margin: 0 auto;
-  }
-  button {
-    font-size: 16px;
-    font-weight: 600;
-    padding: 14px 28px;
-    border-radius: 12px;
-    border: none;
-    background: #007aff;
-    color: #fff;
-    margin-top: 20px;
-    width: 100%;
-    cursor: pointer;
-  }
-  a {
-    display: block;
-    margin-top: 20px;
-    color: #007aff;
-    font-size: 14px;
-    text-decoration: none;
-  }
-</style>
-</head>
-<body>
-  <div class="card">
-    <h2>در حال باز کردن Happ...</h2>
-    <p>اگر برنامه به صورت خودکار باز نشد، روی دکمه زیر کلیک کنید.</p>
-    <button id="openBtn">باز کردن در برنامه Happ</button>
-    <a id="fallbackLink" style="display:none;">Happ نصب نیست؟ از اینجا دانلود کنید</a>
-  </div>
+    <meta charset="UTF-8">
 
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const target = params.get('url'); 
-  const ua = navigator.userAgent;
-  
-  const isIOS = /iphone|ipad|ipod/i.test(ua);
-  const isMac = /macintosh|mac os x/i.test(ua) && !isIOS;
-  const isWindows = /windows/i.test(ua);
-  const isAndroid = /android/i.test(ua);
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  const appleStoreUrl = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215'; 
-  const androidStoreUrl = 'https://play.google.com/store/apps/details?id=com.happproxy';
-  const windowsUrl = 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe';
+    <title>Open Happ App</title>
 
-  function buildAndroidIntentUrl(happUrl) {
-    const rest = happUrl.replace(/^happ:\/\//, ''); 
-    const fallback = encodeURIComponent(androidStoreUrl);
-    return `intent://${rest}#Intent;scheme=happ;package=com.happproxy;S.browser_fallback_url=${fallback};end`;
-  }
-
-  function attemptOpen() {
-    if (!target) return;
-    window.location.href = isAndroid ? buildAndroidIntentUrl(target) : target;
-  }
-
-  document.getElementById('openBtn').addEventListener('click', attemptOpen);
-
-  window.addEventListener('load', () => {
-    setTimeout(attemptOpen, 300);
-
-    setTimeout(() => {
-      if (document.visibilityState === 'visible') {
-        const el = document.getElementById('fallbackLink');
-        
-        if (isWindows) {
-          el.href = windowsUrl;
-        } else if (isMac || isIOS) {
-          el.href = appleStoreUrl;
-        } else {
-          el.href = androidStoreUrl;
+    <style>
+        body {
+            font-family: Tahoma, "Segoe UI", Roboto, sans-serif;
+            text-align: center;
+            padding: 60px 20px;
+            margin: 0;
+            background-color: #f4f4f7;
+            color: #1c1c1e;
         }
-        
-        el.style.display = 'block';
-      }
-    }, 2000);
-  });
-</script>
+
+        .card {
+            background: #ffffff;
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        button {
+            font-size: 16px;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            background: #007aff;
+            color: #ffffff;
+            margin-top: 20px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        a {
+            display: none;
+            margin-top: 20px;
+            color: #007aff;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        #errorMessage {
+            display: none;
+            color: #c62828;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>در حال باز کردن Happ...</h2>
+
+        <p>
+            اگر برنامه به صورت خودکار باز نشد،
+            روی دکمه زیر کلیک کنید.
+        </p>
+
+        <button id="openBtn">
+            باز کردن در برنامه Happ
+        </button>
+
+        <p id="errorMessage">
+            لینک معتبر دریافت نشد.
+        </p>
+
+        <a id="fallbackLink">
+            Happ نصب نیست؟ از اینجا دانلود کنید
+        </a>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const target = params.get("url");
+
+        const ua = navigator.userAgent;
+
+        const isIOS = /iphone|ipad|ipod/i.test(ua);
+        const isMac = /macintosh|mac os x/i.test(ua) && !isIOS;
+        const isWindows = /windows/i.test(ua);
+        const isAndroid = /android/i.test(ua);
+
+        const appleStoreUrl =
+            "https://apps.apple.com/us/app/happ-proxy-utility/id6504287215";
+
+        const androidStoreUrl =
+            "https://play.google.com/store/apps/details?id=com.happproxy";
+
+        const windowsUrl =
+            "https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe";
+
+        function isValidTarget(value) {
+            return (
+                typeof value === "string" &&
+                value.startsWith("happ://add/")
+            );
+        }
+
+        function buildAndroidIntentUrl(happUrl) {
+            const rest = happUrl.replace(/^happ:\/\//, "");
+            const fallback = encodeURIComponent(androidStoreUrl);
+
+            return (
+                "intent://" +
+                rest +
+                "#Intent;" +
+                "scheme=happ;" +
+                "package=com.happproxy;" +
+                "S.browser_fallback_url=" +
+                fallback +
+                ";end"
+            );
+        }
+
+        function setFallbackLink() {
+            const fallbackLink =
+                document.getElementById("fallbackLink");
+
+            if (isWindows) {
+                fallbackLink.href = windowsUrl;
+            } else if (isMac || isIOS) {
+                fallbackLink.href = appleStoreUrl;
+            } else {
+                fallbackLink.href = androidStoreUrl;
+            }
+
+            fallbackLink.style.display = "block";
+        }
+
+        function attemptOpen() {
+            if (!isValidTarget(target)) {
+                document.getElementById("errorMessage").style.display =
+                    "block";
+                return;
+            }
+
+            if (isAndroid) {
+                window.location.href = buildAndroidIntentUrl(target);
+            } else {
+                window.location.href = target;
+            }
+        }
+
+        document
+            .getElementById("openBtn")
+            .addEventListener("click", attemptOpen);
+
+        window.addEventListener("load", function () {
+            setFallbackLink();
+
+            /*
+             * Der automatische Versuch kann von Browsern blockiert werden.
+             * Deshalb bleibt der manuelle Button sichtbar.
+             */
+            setTimeout(attemptOpen, 500);
+        });
+    </script>
 </body>
 </html>
